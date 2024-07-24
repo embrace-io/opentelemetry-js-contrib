@@ -40,7 +40,7 @@
     "@opentelemetry/instrumentation-http": "^0.25.0",
     "@opentelemetry/sdk-trace-node": "^0.25.0",
     "@opentelemetry/sdk-trace-base": "^0.25.0",
-    "axios": "^0.21.1"
+    "axios": "^1.7.2"
   },
   "homepage": "https://github.com/open-telemetry/opentelemetry-js-contrib#readme",
   "devDependencies": {
