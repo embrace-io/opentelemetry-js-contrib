@@ -86,8 +86,11 @@ const rootReducer = combineReducers({
 type RootState = ReturnType<typeof rootReducer>;
 
 const provider = createInstanceProvider();
-
-const otelLoggerMiddleware = otelMiddleware<RootState>(provider);
+const config = {
+  debug: false,
+  allowLogging: false,
+};
+const otelLoggerMiddleware = otelMiddleware<RootState>(provider, config);
 
 /**
  * Store

@@ -13,47 +13,71 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {
-  Dispatch,
-  Middleware,
-  MiddlewareAPI,
-  Action,
-  UnknownAction,
-} from 'redux';
+import { Dispatch, Middleware, Action, UnknownAction } from 'redux';
 import { TracerProvider, trace } from '@opentelemetry/api';
 import { PACKAGE_NAME, PACKAGE_VERSION } from './version';
 import { spanEnd, spanStart } from './utils/spanFactory';
 import { AppState } from 'react-native';
 
-const SPAN_NAME = 'redux-action';
+const SPAN_NAME = {
+  action: 'redux-action',
+  store: 'redux-created-store',
+};
+
+interface MiddlewareConfig {
+  debug?: boolean;
+  allowLogging?: boolean;
+}
 
 const middleware = <RootState>(
-  provider: TracerProvider
+  provider: TracerProvider,
+  config?: MiddlewareConfig
 ): Middleware<object, RootState> => {
-  if (!provider) {
-    console.info('No TracerProvider found. Using global tracer instead.');
-  } else {
-    console.info('TracerProvider. Using custom tracer.');
-  }
+  /**
+   * happening just once, before the store is created
+   */
 
-  const tracer = provider
-    ? provider.getTracer(PACKAGE_NAME, PACKAGE_VERSION)
-    : trace.getTracer(PACKAGE_NAME, PACKAGE_VERSION);
+  // NOTE
+  // create an span that start with the Store creation?
+  // should be ended when the store is destroyed (if possible to catch that moment)
 
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  return ({ getState }: MiddlewareAPI<Dispatch<UnknownAction>, RootState>) => {
-    const span = spanStart(tracer, SPAN_NAME);
+  // @ts-ignore
+  return () => {
+    /**
+     * happening just once, when the store is created
+     */
+    if (!provider) {
+      console.info('No TracerProvider found. Using global tracer instead.');
+    } else {
+      console.info('TracerProvider. Using custom tracer.');
+    }
 
-    console.log('store before dispatch', getState());
+    const tracer = provider
+      ? provider.getTracer(PACKAGE_NAME, PACKAGE_VERSION)
+      : trace.getTracer(PACKAGE_NAME, PACKAGE_VERSION);
 
     return (next: Dispatch<UnknownAction>) => {
-      return async (action: Action) => {
-        const result = await next(action);
+      /**
+       * happening just once, when the store is created
+       */
+      return (action: Action) => {
+        /**
+         * happening on each action dispatch
+         */
+        // NOTE: should all these spans be childs of the store creation span?
+        const span = spanStart(tracer, SPAN_NAME.action);
+        const result = next(action);
 
         if (span) {
-          span.addEvent('dispatch', result);
+          const { type } = result;
+
+          if (config?.allowLogging) {
+            // TODO: create a log
+            // experimental package: @opentelemetry/api-logs
+          } else {
+            span.addEvent('dispatch', { type });
+          }
 
           spanEnd(span, AppState.currentState);
         }
