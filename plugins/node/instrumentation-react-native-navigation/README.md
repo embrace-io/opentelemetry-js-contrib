@@ -7,13 +7,13 @@ This module provides instrumentation for [react-native/nagivation](https://react
 
 ## Installation
 
-```
+```bash
 npm i @opentelemetry/instrumentation-react-native-navigation @opentelemetry/api
 ```
 
 or if you use yarn
 
-```
+```bash
 yarn add @opentelemetry/instrumentation-react-native-navigation @opentelemetry/api
 ```
 
