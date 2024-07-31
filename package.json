@@ -82,8 +82,5 @@
     "propagators/*",
     "detectors/node/*",
     "metapackages/*"
-  ],
-  "dependencies": {
-    "react": "^18.0.0"
-  }
+  ]
 }

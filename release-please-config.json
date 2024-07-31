@@ -1,8 +1,6 @@
 {
   "bootstrap-sha": "798fb2d5c585f6fdee10146bfe15e03409bdddfe",
-  "plugins": [
-    "node-workspace"
-  ],
+  "plugins": ["node-workspace"],
   "bump-minor-pre-major": true,
   "sequential-calls": true,
   "packages": {
@@ -35,6 +33,7 @@
     "plugins/node/instrumentation-socket.io": {},
     "plugins/node/instrumentation-tedious": {},
     "plugins/node/instrumentation-undici": {},
+    "plugins/node/instrumentation-react-native-redux": {},
     "plugins/node/opentelemetry-instrumentation-aws-lambda": {},
     "plugins/node/opentelemetry-instrumentation-aws-sdk": {},
     "plugins/node/opentelemetry-instrumentation-bunyan": {},
