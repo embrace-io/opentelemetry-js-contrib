@@ -19,17 +19,42 @@ import store, { counterActions } from './helper/store';
 import { Pressable, Text } from 'react-native';
 import { fireEvent, render } from '@testing-library/react';
 import { Provider } from 'react-redux';
+import middleware from '../src';
+import { Dispatch, MiddlewareAPI, UnknownAction } from 'redux';
 
-describe('middleware.ts', () => {
+describe('index.ts', () => {
   const sandbox = sinon.createSandbox();
   let mockConsoleDir: sinon.SinonSpy;
+  let mockConsoleInfo: sinon.SinonSpy;
 
   beforeEach(() => {
     mockConsoleDir = sandbox.spy(console, 'dir');
+    mockConsoleInfo = sandbox.spy(console, 'info');
   });
 
   afterEach(() => {
     sandbox.restore();
+  });
+
+  it('should post console messages if debug mode is enabled', () => {
+    const result = middleware(undefined, { debug: true });
+
+    // note: not worried about the redux implementation here.
+    result(null as unknown as MiddlewareAPI<Dispatch<UnknownAction>, unknown>);
+
+    sandbox.assert.calledWith(
+      mockConsoleInfo,
+      'No TracerProvider found. Using global tracer instead.'
+    );
+  });
+
+  it('should not post console messages if debug mode is disabled', () => {
+    const result = middleware(undefined, { debug: false });
+
+    // note: not worried about the redux implementation here.
+    result(null as unknown as MiddlewareAPI<Dispatch<UnknownAction>, unknown>);
+
+    sandbox.assert.notCalled(mockConsoleInfo);
   });
 
   it('should track an action and create the corresponding span', async () => {

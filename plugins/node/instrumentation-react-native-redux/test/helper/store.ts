@@ -20,8 +20,7 @@ import {
   compose,
   Reducer,
 } from 'redux';
-
-import otelMiddleware from '../../src/middleware';
+import otelMiddleware from '../../src';
 import { createInstanceProvider } from '../helper/provider';
 
 type IncrementAction = {
@@ -34,7 +33,6 @@ type DecrementAction = {
   count: number;
 };
 
-// Define initial state type and state
 type CounterState = {
   count: number;
 };
@@ -86,12 +84,10 @@ const rootReducer = combineReducers({
 type RootState = ReturnType<typeof rootReducer>;
 
 const provider = createInstanceProvider();
-const config = {
+const otelLoggerMiddleware = otelMiddleware<RootState>(provider, {
   debug: false,
   allowLogging: false,
-};
-const otelLoggerMiddleware = otelMiddleware<RootState>(provider, config);
-
+});
 /**
  * Store
  */
