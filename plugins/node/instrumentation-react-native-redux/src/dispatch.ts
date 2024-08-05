@@ -14,25 +14,27 @@
  * limitations under the License.
  */
 import { Dispatch, Middleware, Action, UnknownAction } from 'redux';
-import { TracerProvider, trace } from '@opentelemetry/api';
+import { TracerProvider, trace, Attributes } from '@opentelemetry/api';
 import { PACKAGE_NAME, PACKAGE_VERSION } from './version';
-import { spanEnd, spanStart } from './utils/spanFactory';
+import {
+  ATTRIBUTES,
+  spanEnd,
+  spanStart,
+  STATIC_NAME,
+} from './utils/spanFactory';
 import logFactory from './utils/logFactory';
-
-const SPAN_NAME = {
-  thunk: 'thunk',
-  action: 'action',
-};
 
 interface MiddlewareConfig {
   debug?: boolean;
+  name?: string; // custom name for each action
+  attributes?: Attributes;
 }
 
 const middleware = <RootState>(
   provider: TracerProvider | undefined,
   config?: MiddlewareConfig
 ): Middleware<object, RootState> => {
-  const { debug } = config || {};
+  const { debug, name, attributes } = config || {};
   const console = logFactory(!!debug);
 
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -50,15 +52,15 @@ const middleware = <RootState>(
 
     return (next: Dispatch<UnknownAction>) => {
       return (action: Action) => {
-        const span = spanStart(tracer, SPAN_NAME.action);
+        const span = spanStart(tracer, name ?? STATIC_NAME, { attributes });
         const result = next(action);
 
         if (span) {
           const { type, ...otherValues } = result;
 
           span.setAttributes({
-            type,
-            payload: JSON.stringify(otherValues),
+            [ATTRIBUTES.type]: type,
+            [ATTRIBUTES.payload]: JSON.stringify(otherValues),
           });
 
           spanEnd(span);

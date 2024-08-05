@@ -87,9 +87,9 @@ describe('dispatch.ts', () => {
         timestamp: sandbox.match.number,
         duration: sandbox.match.number,
         attributes: {
-          type: 'COUNTER_INCREASE:slow',
+          'action.type': 'COUNTER_INCREASE:slow',
           'action.state': 'background',
-          payload: '{"count":3}',
+          'action.payload': '{"count":3}',
         },
       }),
       sandbox.match({
@@ -106,9 +106,9 @@ describe('dispatch.ts', () => {
         timestamp: sandbox.match.number,
         duration: sandbox.match.number,
         attributes: {
-          type: 'COUNTER_DECREASE:normal',
+          'action.type': 'COUNTER_DECREASE:normal',
           'action.state': 'background',
-          payload: '{"count":1}',
+          'action.payload': '{"count":1}',
         },
       }),
       sandbox.match({

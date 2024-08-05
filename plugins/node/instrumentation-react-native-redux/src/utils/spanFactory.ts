@@ -16,9 +16,11 @@
 import { AppState } from 'react-native';
 import { Context, Span, SpanOptions, Tracer } from '@opentelemetry/api';
 
+const STATIC_NAME = 'action';
 const ATTRIBUTES = {
-  name: 'action.name',
-  appState: 'action.state',
+  payload: `${STATIC_NAME}.payload`,
+  type: `${STATIC_NAME}.type`,
+  appState: `${STATIC_NAME}.state`,
 };
 
 const spanStart = (
@@ -42,4 +44,4 @@ const spanEnd = (span: Span | null) => {
   }
 };
 
-export { spanStart, spanEnd, ATTRIBUTES };
+export { spanStart, spanEnd, ATTRIBUTES, STATIC_NAME };

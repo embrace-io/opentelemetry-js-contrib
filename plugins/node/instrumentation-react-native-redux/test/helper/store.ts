@@ -66,7 +66,7 @@ const counterReducer: Reducer<CounterState, CounterActions> = (
   switch (action.type) {
     case 'COUNTER_INCREASE:slow': {
       // NOTE: adding slowliness to the action for testing purposes
-      const test = new Array(100000000);
+      const test = new Array(1000000);
       test.forEach((_, index) => (test[index] = true));
 
       return { ...state, count: state.count + action.count };
