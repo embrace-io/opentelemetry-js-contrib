@@ -47,7 +47,7 @@
     "@opentelemetry/resources": "^0.25.0",
     "@opentelemetry/semantic-conventions": "^1.23.0",
     "@opentelemetry/sdk-trace-base": "^0.25.0",
-    "axios": "^0.21.1",
+    "axios": "^1.7.3",
     "cross-env": "^7.0.3",
     "connect": "^3.7.0"
   },
