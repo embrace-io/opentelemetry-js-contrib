@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { AppStateStatus } from 'react-native';
-import { Attributes, Span, Tracer } from '@opentelemetry/api';
+import { AppState } from 'react-native';
+import { Context, Span, SpanOptions, Tracer } from '@opentelemetry/api';
 
 const ATTRIBUTES = {
   name: 'action.name',
@@ -24,27 +24,20 @@ const ATTRIBUTES = {
 const spanStart = (
   tracer: Tracer,
   name: string,
-  customAttributes?: Attributes
+  options?: SpanOptions,
+  context?: Context
 ) => {
   if (!tracer) {
     // do nothing in case for some reason the tracer is not initialized or there is already an active span
     return;
   }
 
-  // Starting the span
-  const span = tracer.startSpan(name);
-
-  if (customAttributes) {
-    span.setAttributes(customAttributes);
-  }
-
-  return span;
+  return tracer.startSpan(name, options, context);
 };
 
-const spanEnd = (span: Span | null, appState?: AppStateStatus) => {
+const spanEnd = (span: Span | null) => {
   if (span) {
-    span.setAttribute(ATTRIBUTES.appState, appState ?? 'active');
-
+    span.setAttribute(ATTRIBUTES.appState, AppState.currentState);
     span.end();
   }
 };

@@ -17,19 +17,18 @@ import {
   legacy_createStore as createStore,
   combineReducers,
   applyMiddleware,
-  compose,
   Reducer,
 } from 'redux';
-import otelMiddleware from '../../src';
+import { dispatchMiddleware } from '../../src';
 import { createInstanceProvider } from '../helper/provider';
 
 type IncrementAction = {
-  type: 'COUNTER_INCREASE';
+  type: 'COUNTER_INCREASE:slow';
   count: number;
 };
 
 type DecrementAction = {
-  type: 'COUNTER_DECREASE';
+  type: 'COUNTER_DECREASE:normal';
   count: number;
 };
 
@@ -42,12 +41,12 @@ const initialCounterState: CounterState = {
 };
 
 const counterIncrease = (count = 1): IncrementAction => ({
-  type: 'COUNTER_INCREASE',
+  type: 'COUNTER_INCREASE:slow',
   count,
 });
 
 const counterDecrease = (count = 1): DecrementAction => ({
-  type: 'COUNTER_DECREASE',
+  type: 'COUNTER_DECREASE:normal',
   count,
 });
 
@@ -65,10 +64,16 @@ const counterReducer: Reducer<CounterState, CounterActions> = (
   action
 ) => {
   switch (action.type) {
-    case 'COUNTER_INCREASE':
+    case 'COUNTER_INCREASE:slow': {
+      // NOTE: adding slowliness to the action for testing purposes
+      const test = new Array(100000000);
+      test.forEach((_, index) => (test[index] = true));
+
       return { ...state, count: state.count + action.count };
-    case 'COUNTER_DECREASE':
+    }
+    case 'COUNTER_DECREASE:normal': {
       return { ...state, count: state.count - action.count };
+    }
     default:
       return state;
   }
@@ -84,23 +89,20 @@ const rootReducer = combineReducers({
 type RootState = ReturnType<typeof rootReducer>;
 
 const provider = createInstanceProvider();
-const otelLoggerMiddleware = otelMiddleware<RootState>(provider, {
-  debug: false,
-  allowLogging: false,
+const otelLoggerMiddleware = dispatchMiddleware<RootState>(provider, {
+  debug: true,
 });
+
 /**
  * Store
  */
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-expect-error
-const store = createStore(
-  rootReducer,
-  compose(applyMiddleware(otelLoggerMiddleware))
-);
+const store = createStore(rootReducer, applyMiddleware(otelLoggerMiddleware));
 
 type AppDispatch = typeof store.dispatch;
 
 export default store;
-export { counterActions };
+export { counterActions, rootReducer };
 export type { RootState, AppDispatch };
