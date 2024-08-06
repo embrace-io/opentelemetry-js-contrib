@@ -26,8 +26,7 @@ import {Provider} from "react-redux";
 import store from './store';
 
 export default function RootLayout() {
-
-return (
+  return (
     <Provider store={store}> {/* As with any regular Redux configuration, the provider should wrap the entire application at the root of the tree. There is nothing new or custom here. */}
       <Stack>
         <Stack.Screen
