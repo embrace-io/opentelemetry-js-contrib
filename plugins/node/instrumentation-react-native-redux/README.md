@@ -191,6 +191,7 @@ The following object is the representation of what the middleware will create fo
   links: []
 }
 ```
+
 As mentioned above, the `name` of this Span is `action` (static). The `action.type` is injected as an attribute, as well as `action.payload`, which is a string that adds whatever the action has (except for the mentioned `action.type`).
 Finally, the middleware adds the `action.state`, which provides information about the state of the application (`AppState.currentState`).
 
