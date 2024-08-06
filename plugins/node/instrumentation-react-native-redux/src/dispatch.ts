@@ -33,17 +33,18 @@ interface MiddlewareConfig {
 const middleware = <RootState>(
   provider: TracerProvider | undefined,
   config?: MiddlewareConfig
-): Middleware<object, RootState> => {
+  // eslint-disable-next-line @typescript-eslint/ban-types
+): Middleware<{}, RootState> => {
   const { debug, name, attributes } = config || {};
   const console = logFactory(!!debug);
 
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   return () => {
-    if (!provider) {
-      console.info('No TracerProvider found. Using global tracer instead.');
-    } else {
+    if (provider) {
       console.info('TracerProvider. Using custom tracer.');
+    } else {
+      console.info('No TracerProvider found. Using global tracer instead.');
     }
 
     const tracer = provider
@@ -55,16 +56,12 @@ const middleware = <RootState>(
         const span = spanStart(tracer, name ?? STATIC_NAME, { attributes });
         const result = next(action);
 
-        if (span) {
-          const { type, ...otherValues } = result;
+        const { type, ...otherValues } = result;
 
-          span.setAttributes({
-            [ATTRIBUTES.type]: type,
-            [ATTRIBUTES.payload]: JSON.stringify(otherValues),
-          });
-
-          spanEnd(span);
-        }
+        spanEnd(span, {
+          [ATTRIBUTES.type]: type,
+          [ATTRIBUTES.payload]: JSON.stringify(otherValues),
+        });
 
         return result;
       };

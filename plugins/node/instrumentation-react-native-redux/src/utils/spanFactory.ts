@@ -29,19 +29,17 @@ const spanStart = (
   options?: SpanOptions,
   context?: Context
 ) => {
-  if (!tracer) {
-    // do nothing in case for some reason the tracer is not initialized or there is already an active span
-    return;
-  }
-
   return tracer.startSpan(name, options, context);
 };
 
-const spanEnd = (span: Span | null) => {
-  if (span) {
-    span.setAttribute(ATTRIBUTES.appState, AppState.currentState);
-    span.end();
+const spanEnd = (span: Span, attributes?: SpanOptions['attributes']) => {
+  span.setAttribute(ATTRIBUTES.appState, AppState.currentState);
+
+  if (attributes) {
+    span.setAttributes(attributes);
   }
+
+  span.end();
 };
 
 export { spanStart, spanEnd, ATTRIBUTES, STATIC_NAME };

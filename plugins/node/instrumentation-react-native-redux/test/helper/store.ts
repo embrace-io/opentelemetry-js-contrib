@@ -86,10 +86,8 @@ const rootReducer = combineReducers({
   counter: counterReducer,
 });
 
-type RootState = ReturnType<typeof rootReducer>;
-
 const provider = createInstanceProvider();
-const otelLoggerMiddleware = dispatchMiddleware<RootState>(provider, {
+const middleware = dispatchMiddleware(provider, {
   debug: true,
 });
 
@@ -98,10 +96,11 @@ const otelLoggerMiddleware = dispatchMiddleware<RootState>(provider, {
  */
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-expect-error
-const store = createStore(rootReducer, applyMiddleware(otelLoggerMiddleware));
+// @ts-ignore
+const store = createStore(rootReducer, applyMiddleware(middleware));
 
 type AppDispatch = typeof store.dispatch;
+type RootState = ReturnType<typeof rootReducer>;
 
 export default store;
 export { counterActions, rootReducer };

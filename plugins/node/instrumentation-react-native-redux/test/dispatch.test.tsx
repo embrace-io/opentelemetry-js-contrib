@@ -15,12 +15,14 @@
  */
 import sinon from 'sinon';
 import { beforeEach, afterEach } from 'mocha';
-import store, { counterActions } from './helper/store';
+import store, { counterActions, rootReducer } from './helper/store';
 import { fireEvent, render } from '@testing-library/react';
-import { Dispatch, MiddlewareAPI, UnknownAction } from 'redux';
 import middleware from '../src/dispatch';
 import { Provider } from 'react-redux';
 import { Pressable, Text } from 'react-native';
+import { createInstanceProvider } from './helper/provider';
+import * as spanFactory from '../src/utils/spanFactory';
+import { applyMiddleware, legacy_createStore as createStore } from 'redux';
 
 describe('dispatch.ts', () => {
   const sandbox = sinon.createSandbox();
@@ -36,25 +38,48 @@ describe('dispatch.ts', () => {
     sandbox.restore();
   });
 
-  it('should post console messages if debug mode is enabled', () => {
-    const result = middleware(undefined, { debug: true });
+  it('should not post console messages if debug mode is disabled', () => {
+    middleware(undefined, { debug: false })(store);
+    sandbox.assert.notCalled(mockConsoleInfo);
+  });
 
-    // note: not worried about the redux implementation here.
-    result(null as unknown as MiddlewareAPI<Dispatch<UnknownAction>, unknown>);
+  it('should use the custom provider and custom configurations to apply to the middleware', () => {
+    const provider = createInstanceProvider();
+    const getTracerSpy = sandbox.spy(provider, 'getTracer');
+    const spanStartSpy = sandbox.spy(spanFactory, 'spanStart');
+    const spanEndSpy = sandbox.spy(spanFactory, 'spanEnd');
+
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    const store = createStore(
+      rootReducer,
+      applyMiddleware(
+        middleware(provider, {
+          debug: true,
+          name: 'redux-action',
+          attributes: { version: '1.1.1' },
+        })
+      )
+    );
 
     sandbox.assert.calledWith(
       mockConsoleInfo,
-      'No TracerProvider found. Using global tracer instead.'
+      'TracerProvider. Using custom tracer.'
     );
-  });
 
-  it('should not post console messages if debug mode is disabled', () => {
-    const result = middleware(undefined, { debug: false });
+    sandbox.assert.calledWith(
+      getTracerSpy,
+      '@opentelemetry/instrumentation-react-native-redux',
+      '0.1.0'
+    );
 
-    // note: not worried about the redux implementation here.
-    result(null as unknown as MiddlewareAPI<Dispatch<UnknownAction>, unknown>);
+    store.dispatch(counterActions.decrease(1));
 
-    sandbox.assert.notCalled(mockConsoleInfo);
+    sandbox.assert.calledWith(spanStartSpy, sandbox.match.any, 'redux-action', {
+      attributes: { version: '1.1.1' },
+    });
+
+    sandbox.assert.calledOnce(spanEndSpy);
   });
 
   it('should track an action and create the corresponding span', () => {
