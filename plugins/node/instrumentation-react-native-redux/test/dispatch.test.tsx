@@ -75,11 +75,33 @@ describe('dispatch.ts', () => {
 
     store.dispatch(counterActions.decrease(1));
 
+    // calling the start span function
     sandbox.assert.calledWith(spanStartSpy, sandbox.match.any, 'redux-action', {
       attributes: { version: '1.1.1' },
     });
 
+    // calling the end span function
     sandbox.assert.calledOnce(spanEndSpy);
+
+    // output of the span
+    sandbox.assert.calledWith(
+      mockConsoleDir,
+      sandbox.match({
+        name: 'redux-action',
+        id: sandbox.match.string,
+        timestamp: sandbox.match.number,
+        duration: sandbox.match.number,
+        attributes: {
+          version: '1.1.1',
+          'action.type': 'COUNTER_DECREASE:normal',
+          'action.state': 'background',
+          'action.payload': '{"count":1}',
+        },
+      }),
+      sandbox.match({
+        depth: sandbox.match.number,
+      })
+    );
   });
 
   it('should track an action and create the corresponding span', () => {
