@@ -23,6 +23,8 @@ import { Pressable, Text } from 'react-native';
 import { createInstanceProvider } from './helper/provider';
 import * as spanFactory from '../src/utils/spanFactory';
 import { applyMiddleware, legacy_createStore as createStore } from 'redux';
+import {Attributes} from "@opentelemetry/api";
+import noopMiddleware from "./helper/noopMiddleware";
 
 describe('dispatch.ts', () => {
   const sandbox = sinon.createSandbox();
@@ -57,7 +59,10 @@ describe('dispatch.ts', () => {
         middleware(provider, {
           debug: true,
           name: 'redux-action',
-          attributes: { version: '1.1.1' },
+          attributeTransform: (attrs: Attributes) => ({
+            ...attrs,
+            version: '1.1.1'
+          }),
         })
       )
     );
@@ -77,7 +82,12 @@ describe('dispatch.ts', () => {
 
     // calling the start span function
     sandbox.assert.calledWith(spanStartSpy, sandbox.match.any, 'redux-action', {
-      attributes: { version: '1.1.1' },
+      attributes: {
+        version: '1.1.1',
+        'action.type': 'COUNTER_DECREASE:normal',
+        'action.payload': '{"count":1}',
+        'action.outcome': 'incomplete',
+      },
     });
 
     // calling the end span function
@@ -90,12 +100,13 @@ describe('dispatch.ts', () => {
         name: 'redux-action',
         id: sandbox.match.string,
         timestamp: sandbox.match.number,
-        duration: sandbox.match.number,
+        duration: sandbox.match((n:number) => n > 100),
         attributes: {
           version: '1.1.1',
           'action.type': 'COUNTER_DECREASE:normal',
           'action.state': 'background',
           'action.payload': '{"count":1}',
+          'action.outcome': 'success',
         },
       }),
       sandbox.match({
@@ -137,6 +148,7 @@ describe('dispatch.ts', () => {
           'action.type': 'COUNTER_INCREASE:slow',
           'action.state': 'background',
           'action.payload': '{"count":3}',
+          'action.outcome': 'success',
         },
       }),
       sandbox.match({
@@ -156,6 +168,69 @@ describe('dispatch.ts', () => {
           'action.type': 'COUNTER_DECREASE:normal',
           'action.state': 'background',
           'action.payload': '{"count":1}',
+          'action.outcome': 'success',
+        },
+      }),
+      sandbox.match({
+        depth: sandbox.match.number,
+      })
+    );
+  });
+
+  it('should handle an action that fails', () => {
+    try {
+      store.dispatch(counterActions.decrease(42));
+    } catch (e) {}
+
+    sandbox.assert.calledWith(
+      mockConsoleDir,
+      sandbox.match({
+        name: 'action',
+        id: sandbox.match.string,
+        timestamp: sandbox.match.number,
+        duration: sandbox.match.number,
+        attributes: {
+          'action.type': 'COUNTER_DECREASE:normal',
+          'action.state': 'background',
+          'action.payload': '{"count":42}',
+          'action.outcome': 'fail',
+        },
+      }),
+      sandbox.match({
+        depth: sandbox.match.number,
+      })
+    );
+  });
+
+  it('should handle another middleware being added to the chain', () => {
+    const provider = createInstanceProvider();
+
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    const store = createStore(
+      rootReducer,
+      applyMiddleware(
+        middleware(provider),
+        noopMiddleware(),
+      )
+    );
+
+    store.dispatch(counterActions.increase(1));
+
+    sandbox.assert.calledWith(
+      mockConsoleDir,
+      sandbox.match({
+        name: 'action',
+        id: sandbox.match.string,
+        timestamp: sandbox.match.number,
+        // The slow action should take at least 1000ms, make sure that we still record this duration correctly
+        // when there's another middleware in the way
+        duration: sandbox.match((n:number) => n > 1000),
+        attributes: {
+          'action.type': 'COUNTER_INCREASE:slow',
+          'action.state': 'background',
+          'action.payload': '{"count":1}',
+          'action.outcome': 'success',
         },
       }),
       sandbox.match({

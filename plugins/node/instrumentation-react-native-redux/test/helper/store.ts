@@ -65,13 +65,17 @@ const counterReducer: Reducer<CounterState, CounterActions> = (
 ) => {
   switch (action.type) {
     case 'COUNTER_INCREASE:slow': {
-      // NOTE: adding slowliness to the action for testing purposes
+      // NOTE: adding slowness to the action for testing purposes
       const test = new Array(1000000);
       test.forEach((_, index) => (test[index] = true));
 
       return { ...state, count: state.count + action.count };
     }
     case 'COUNTER_DECREASE:normal': {
+      if (action.count === 42) {
+        throw new Error("action failed");
+      }
+
       return { ...state, count: state.count - action.count };
     }
     default:
