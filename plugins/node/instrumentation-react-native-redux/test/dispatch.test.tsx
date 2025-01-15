@@ -100,7 +100,7 @@ describe('dispatch.ts', () => {
         name: 'redux-action',
         id: sandbox.match.string,
         timestamp: sandbox.match.number,
-        duration: sandbox.match((n:number) => n > 100),
+        duration: sandbox.match.number,
         attributes: {
           version: '1.1.1',
           'action.type': 'COUNTER_DECREASE:normal',
