@@ -58,13 +58,13 @@ const middleware = <RootState>(
       : trace.getTracer(PACKAGE_NAME, PACKAGE_VERSION);
 
     return next => {
-      return a => {
-        const action = a as Action;
-        if (!(action && action.type)) {
-          return next(a);
+      return action => {
+        const actionTyped = action as Action;
+        if (!(actionTyped && actionTyped.type)) {
+          return next(action);
         }
 
-        const { type, ...otherValues } = action;
+        const { type, ...otherValues } = actionTyped;
 
         const span = spanStart(tracer, name ?? STATIC_NAME, {
           attributes: attributeTransform({
