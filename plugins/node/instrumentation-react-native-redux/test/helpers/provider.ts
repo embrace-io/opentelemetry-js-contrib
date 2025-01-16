@@ -14,21 +14,28 @@
  * limitations under the License.
  */
 import {
-  Middleware,
-} from 'redux';
+  BasicTracerProvider,
+  SpanExporter,
+  SimpleSpanProcessor,
+} from '@opentelemetry/sdk-trace-base';
 
-const middleware = <
-  RootState
->(): // disabling rule following recommendation on: https://redux.js.org/usage/usage-with-typescript#type-checking-middleware
-// eslint-disable-next-line @typescript-eslint/ban-types
-Middleware<{}, RootState> => {
-  return () => {
-    return next => {
-      return action => {
-        return next(action);
-      };
-    };
-  };
+let provider: BasicTracerProvider;
+
+const createInstanceProvider = (exporter: SpanExporter) => {
+  provider = new BasicTracerProvider();
+
+  const processor = new SimpleSpanProcessor(exporter);
+
+  provider.addSpanProcessor(processor);
+  provider.register();
+
+  return provider;
 };
 
-export default middleware;
+const shutdownInstanceProvider = async () => {
+  if (provider) {
+    await provider.shutdown();
+  }
+};
+
+export { createInstanceProvider, shutdownInstanceProvider };

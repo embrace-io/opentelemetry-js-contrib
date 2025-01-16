@@ -20,7 +20,8 @@ import {
   Reducer,
 } from 'redux';
 import { dispatchMiddleware } from '../../src';
-import { createInstanceProvider } from '../helper/provider';
+import { createInstanceProvider } from './provider';
+import { SpanExporter } from '@opentelemetry/sdk-trace-base';
 
 type IncrementAction = {
   type: 'COUNTER_INCREASE:slow';
@@ -90,22 +91,21 @@ const rootReducer = combineReducers({
   counter: counterReducer,
 });
 
-const provider = createInstanceProvider();
-const middleware = dispatchMiddleware(provider, {
-  debug: true,
-});
-
 /**
  * Store
  */
+const getStore = (exporter: SpanExporter) => {
+  const provider = createInstanceProvider(exporter);
+  const middleware = dispatchMiddleware(provider, {
+    debug: true,
+  });
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  return createStore(rootReducer, applyMiddleware(middleware));
+};
 
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-const store = createStore(rootReducer, applyMiddleware(middleware));
-
-type AppDispatch = typeof store.dispatch;
 type RootState = ReturnType<typeof rootReducer>;
 
-export default store;
+export default getStore;
 export { counterActions, rootReducer };
-export type { RootState, AppDispatch };
+export type { RootState };

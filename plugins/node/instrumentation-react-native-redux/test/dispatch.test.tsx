@@ -15,38 +15,56 @@
  */
 import sinon from 'sinon';
 import { beforeEach, afterEach } from 'mocha';
-import store, { counterActions, rootReducer } from './helper/store';
+import getStore, { counterActions, rootReducer } from './helpers/store';
 import { fireEvent, render } from '@testing-library/react';
 import middleware from '../src/dispatch';
 import { Provider } from 'react-redux';
 import { Pressable, Text } from 'react-native';
-import { createInstanceProvider } from './helper/provider';
+import {createInstanceProvider, shutdownInstanceProvider} from './helpers/provider';
 import * as spanFactory from '../src/utils/spanFactory';
 import {applyMiddleware, legacy_createStore as createStore} from 'redux';
 import {Attributes} from "@opentelemetry/api";
-import noopMiddleware from "./helper/noopMiddleware";
+import noopMiddleware from "./helpers/noopMiddleware";
+import {TestSpanExporter} from "./helpers/exporter";
+
 
 describe('dispatch.ts', () => {
   const sandbox = sinon.createSandbox();
-  let mockConsoleDir: sinon.SinonSpy;
   let mockConsoleInfo: sinon.SinonSpy;
+  let exporter: TestSpanExporter;
+
+  const verifySpans = (expected: object[]) => {
+    sandbox.assert.match(exporter.exportedSpans.map(span => ({
+      name: span.name,
+      attributes: span.attributes,
+    })), expected);
+  };
 
   beforeEach(() => {
-    mockConsoleDir = sandbox.spy(console, 'dir');
+    exporter = new TestSpanExporter();
     mockConsoleInfo = sandbox.spy(console, 'info');
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     sandbox.restore();
+    await shutdownInstanceProvider();
+    if (exporter) {
+      await exporter.shutdown();
+    }
   });
 
   it('should not post console messages if debug mode is disabled', () => {
+    const store = getStore(exporter);
+    mockConsoleInfo.resetHistory()
+
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     middleware(undefined, { debug: false })(store);
     sandbox.assert.notCalled(mockConsoleInfo);
   });
 
   it('should use the custom provider and custom configurations to apply to the middleware', () => {
-    const provider = createInstanceProvider();
+    const provider = createInstanceProvider(exporter);
     const getTracerSpy = sandbox.spy(provider, 'getTracer');
     const spanStartSpy = sandbox.spy(spanFactory, 'spanStart');
     const spanEndSpy = sandbox.spy(spanFactory, 'spanEnd');
@@ -93,29 +111,22 @@ describe('dispatch.ts', () => {
     // calling the end span function
     sandbox.assert.calledOnce(spanEndSpy);
 
-    // output of the span
-    sandbox.assert.calledWith(
-      mockConsoleDir,
-      sandbox.match({
-        name: 'redux-action',
-        id: sandbox.match.string,
-        timestamp: sandbox.match.number,
-        duration: sandbox.match.number,
-        attributes: {
-          version: '1.1.1',
-          'action.type': 'COUNTER_DECREASE:normal',
-          'action.state': 'background',
-          'action.payload': '{"count":1}',
-          'action.outcome': 'success',
-        },
-      }),
-      sandbox.match({
-        depth: sandbox.match.number,
-      })
-    );
+    // output of the span exporter
+    verifySpans([{
+      name: 'redux-action',
+      attributes: {
+        version: '1.1.1',
+        'action.type': 'COUNTER_DECREASE:normal',
+        'action.state': 'background',
+        'action.payload': '{"count":1}',
+        'action.outcome': 'success',
+      },
+    }]);
   });
 
   it('should track an action and create the corresponding span', () => {
+    const store = getStore(exporter);
+
     const handleIncrease = () => {
       store.dispatch(counterActions.increase(3));
     };
@@ -137,73 +148,47 @@ describe('dispatch.ts', () => {
     );
 
     fireEvent.click(screen.getByText('Increase'));
-    sandbox.assert.calledWith(
-      mockConsoleDir,
-      sandbox.match({
-        name: 'action',
-        id: sandbox.match.string,
-        timestamp: sandbox.match.number,
-        duration: sandbox.match.number,
-        attributes: {
-          'action.type': 'COUNTER_INCREASE:slow',
-          'action.state': 'background',
-          'action.payload': '{"count":3}',
-          'action.outcome': 'success',
-        },
-      }),
-      sandbox.match({
-        depth: sandbox.match.number,
-      })
-    );
+    verifySpans([{
+      name: 'action',
+      attributes: {
+        'action.type': 'COUNTER_INCREASE:slow',
+        'action.state': 'background',
+        'action.payload': '{"count":3}',
+        'action.outcome': 'success',
+      },
+    }]);
 
+    exporter.reset();
     fireEvent.click(screen.getByText('Decrease'));
-    sandbox.assert.calledWith(
-      mockConsoleDir,
-      sandbox.match({
-        name: 'action',
-        id: sandbox.match.string,
-        timestamp: sandbox.match.number,
-        duration: sandbox.match.number,
-        attributes: {
-          'action.type': 'COUNTER_DECREASE:normal',
-          'action.state': 'background',
-          'action.payload': '{"count":1}',
-          'action.outcome': 'success',
-        },
-      }),
-      sandbox.match({
-        depth: sandbox.match.number,
-      })
-    );
+    verifySpans([{
+      name: 'action',
+      attributes: {
+        'action.type': 'COUNTER_DECREASE:normal',
+        'action.state': 'background',
+        'action.payload': '{"count":1}',
+        'action.outcome': 'success',
+      },
+    }]);
   });
 
   it('should handle an action that fails', () => {
     try {
-      store.dispatch(counterActions.decrease(42));
+      getStore(exporter).dispatch(counterActions.decrease(42));
     } catch (e) {}
 
-    sandbox.assert.calledWith(
-      mockConsoleDir,
-      sandbox.match({
-        name: 'action',
-        id: sandbox.match.string,
-        timestamp: sandbox.match.number,
-        duration: sandbox.match.number,
-        attributes: {
-          'action.type': 'COUNTER_DECREASE:normal',
-          'action.state': 'background',
-          'action.payload': '{"count":42}',
-          'action.outcome': 'fail',
-        },
-      }),
-      sandbox.match({
-        depth: sandbox.match.number,
-      })
-    );
+    verifySpans([{
+      name: 'action',
+      attributes: {
+        'action.type': 'COUNTER_DECREASE:normal',
+        'action.state': 'background',
+        'action.payload': '{"count":42}',
+        'action.outcome': 'fail',
+      },
+    }]);
   });
 
   it('should handle another middleware being added to the chain', () => {
-    const provider = createInstanceProvider();
+    const provider = createInstanceProvider(exporter);
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
@@ -217,25 +202,18 @@ describe('dispatch.ts', () => {
 
     store.dispatch(counterActions.increase(1));
 
-    sandbox.assert.calledWith(
-      mockConsoleDir,
-      sandbox.match({
-        name: 'action',
-        id: sandbox.match.string,
-        timestamp: sandbox.match.number,
-        // The slow action should take at least 1000ms, make sure that we still record this duration correctly
-        // when there's another middleware in the way
-        duration: sandbox.match((n:number) => n > 1000),
-        attributes: {
-          'action.type': 'COUNTER_INCREASE:slow',
-          'action.state': 'background',
-          'action.payload': '{"count":1}',
-          'action.outcome': 'success',
-        },
-      }),
-      sandbox.match({
-        depth: sandbox.match.number,
-      })
-    );
+    verifySpans([{
+      name: 'action',
+      attributes: {
+        'action.type': 'COUNTER_INCREASE:slow',
+        'action.state': 'background',
+        'action.payload': '{"count":1}',
+        'action.outcome': 'success',
+      },
+    }]);
+
+    // The slow action should take at least 1000ms, make sure that we still record this duration correctly
+    // when there's another middleware in the way
+    sandbox.assert.match(exporter.exportedSpans[0].duration[1] >= 1, true);
   });
 });
