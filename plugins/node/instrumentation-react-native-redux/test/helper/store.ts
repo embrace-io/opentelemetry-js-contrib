@@ -73,7 +73,7 @@ const counterReducer: Reducer<CounterState, CounterActions> = (
     }
     case 'COUNTER_DECREASE:normal': {
       if (action.count === 42) {
-        throw new Error("action failed");
+        throw new Error('action failed');
       }
 
       return { ...state, count: state.count - action.count };

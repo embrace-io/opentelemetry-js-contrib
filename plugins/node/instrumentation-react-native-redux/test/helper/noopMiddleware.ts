@@ -13,12 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Dispatch, Middleware, Action, UnknownAction } from 'redux';
+import {
+  Dispatch,
+  Middleware,
+  Action,
+  UnknownAction,
+  MiddlewareAPI,
+} from 'redux';
 
-const middleware = <RootState>(): Middleware<{}, RootState> => {
+const middleware = <
+  RootState
+>(): // disabling rule following recommendation on: https://redux.js.org/usage/usage-with-typescript#type-checking-middleware
+// eslint-disable-next-line @typescript-eslint/ban-types
+Middleware<{}, RootState> => {
   return () => {
-    return (next: Dispatch<UnknownAction>) => {
-      return (action: Action) => {
+    return next => {
+      return action => {
         return next(action);
       };
     };

@@ -22,7 +22,7 @@ import { Provider } from 'react-redux';
 import { Pressable, Text } from 'react-native';
 import { createInstanceProvider } from './helper/provider';
 import * as spanFactory from '../src/utils/spanFactory';
-import { applyMiddleware, legacy_createStore as createStore } from 'redux';
+import {Action, applyMiddleware, legacy_createStore as createStore} from 'redux';
 import {Attributes} from "@opentelemetry/api";
 import noopMiddleware from "./helper/noopMiddleware";
 

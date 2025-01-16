@@ -21,14 +21,14 @@ const ATTRIBUTES = {
   payload: `${STATIC_NAME}.payload`,
   type: `${STATIC_NAME}.type`,
   appState: `${STATIC_NAME}.state`,
-  outcome: `${STATIC_NAME}.outcome`
+  outcome: `${STATIC_NAME}.outcome`,
 };
 
 const OUTCOMES = {
   incomplete: 'incomplete',
   success: 'success',
   fail: 'fail',
-}
+};
 
 const spanStart = (
   tracer: Tracer,
