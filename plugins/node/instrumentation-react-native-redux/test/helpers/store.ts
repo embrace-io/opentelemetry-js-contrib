@@ -13,12 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {
-  legacy_createStore as createStore,
-  combineReducers,
-  applyMiddleware,
-  Reducer,
-} from 'redux';
+import { combineReducers, Reducer } from 'redux';
+
+import { configureStore, Tuple } from '@reduxjs/toolkit';
+
 import { dispatchMiddleware } from '../../src';
 import { createInstanceProvider } from './provider';
 import { SpanExporter } from '@opentelemetry/sdk-trace-base';
@@ -99,9 +97,11 @@ const getStore = (exporter: SpanExporter) => {
   const middleware = dispatchMiddleware(provider, {
     debug: true,
   });
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  return createStore(rootReducer, applyMiddleware(middleware));
+
+  return configureStore({
+    reducer: rootReducer,
+    middleware: () => new Tuple(middleware),
+  });
 };
 
 type RootState = ReturnType<typeof rootReducer>;

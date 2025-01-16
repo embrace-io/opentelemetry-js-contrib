@@ -22,10 +22,10 @@ import { Provider } from 'react-redux';
 import { Pressable, Text } from 'react-native';
 import {createInstanceProvider, shutdownInstanceProvider} from './helpers/provider';
 import * as spanFactory from '../src/utils/spanFactory';
-import {applyMiddleware, legacy_createStore as createStore} from 'redux';
 import {Attributes} from "@opentelemetry/api";
 import noopMiddleware from "./helpers/noopMiddleware";
 import {TestSpanExporter} from "./helpers/exporter";
+import {configureStore, Tuple} from "@reduxjs/toolkit";
 
 
 describe('dispatch.ts', () => {
@@ -68,22 +68,17 @@ describe('dispatch.ts', () => {
     const getTracerSpy = sandbox.spy(provider, 'getTracer');
     const spanStartSpy = sandbox.spy(spanFactory, 'spanStart');
     const spanEndSpy = sandbox.spy(spanFactory, 'spanEnd');
-
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    const store = createStore(
-      rootReducer,
-      applyMiddleware(
-        middleware(provider, {
-          debug: true,
-          name: 'redux-action',
-          attributeTransform: (attrs: Attributes) => ({
-            ...attrs,
-            version: '1.1.1'
-          }),
-        })
-      )
-    );
+    const store = configureStore({
+      reducer: rootReducer,
+      middleware: () => new Tuple(middleware(provider, {
+        debug: true,
+        name: 'redux-action',
+        attributeTransform: (attrs: Attributes) => ({
+          ...attrs,
+          version: '1.1.1'
+        }),
+      })),
+    });
 
     sandbox.assert.calledWith(
       mockConsoleInfo,
@@ -189,16 +184,10 @@ describe('dispatch.ts', () => {
 
   it('should handle another middleware being added to the chain', () => {
     const provider = createInstanceProvider(exporter);
-
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    const store = createStore(
-      rootReducer,
-      applyMiddleware(
-        middleware(provider),
-        noopMiddleware(),
-      )
-    );
+    const store = configureStore({
+      reducer: rootReducer,
+      middleware: () => new Tuple(middleware(provider)).concat(noopMiddleware()),
+    });
 
     store.dispatch(counterActions.increase(1));
 
