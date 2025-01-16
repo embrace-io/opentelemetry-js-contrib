@@ -14,11 +14,7 @@
  * limitations under the License.
  */
 import {
-  Dispatch,
   Middleware,
-  Action,
-  UnknownAction,
-  MiddlewareAPI,
 } from 'redux';
 
 const middleware = <
