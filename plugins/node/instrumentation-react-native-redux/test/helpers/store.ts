@@ -13,9 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { combineReducers, Reducer } from 'redux';
-
-import { configureStore, Tuple } from '@reduxjs/toolkit';
+import {
+  combineReducers,
+  Reducer,
+  configureStore,
+  Tuple,
+} from '@reduxjs/toolkit';
 
 import { dispatchMiddleware } from '../../src';
 import { createInstanceProvider } from './provider';

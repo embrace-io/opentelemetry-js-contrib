@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Middleware, Action } from 'redux';
+import { Middleware, Action } from '@reduxjs/toolkit';
 import { TracerProvider, trace, Attributes } from '@opentelemetry/api';
 import { PACKAGE_NAME, PACKAGE_VERSION } from './version';
 import {

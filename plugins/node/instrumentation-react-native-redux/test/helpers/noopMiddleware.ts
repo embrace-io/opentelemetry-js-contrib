@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Middleware } from 'redux';
+import { Middleware } from '@reduxjs/toolkit';
 
 const middleware = <
   RootState
