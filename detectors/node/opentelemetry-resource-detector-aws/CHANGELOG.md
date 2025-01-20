@@ -1,5 +1,92 @@
 # Changelog
 
+## [1.10.0](https://github.com/open-telemetry/opentelemetry-js-contrib/compare/resource-detector-aws-v1.9.0...resource-detector-aws-v1.10.0) (2024-12-18)
+
+
+### Features
+
+* **deps:** update deps matching '@opentelemetry/*' ([#2608](https://github.com/open-telemetry/opentelemetry-js-contrib/issues/2608)) ([aa46705](https://github.com/open-telemetry/opentelemetry-js-contrib/commit/aa46705d2fd1bd5ee6d763ac8cd73a7630889d34))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @opentelemetry/contrib-test-utils bumped from ^0.44.0 to ^0.45.0
+    * @opentelemetry/instrumentation-fs bumped from ^0.18.0 to ^0.19.0
+
+## [1.9.0](https://github.com/open-telemetry/opentelemetry-js-contrib/compare/resource-detector-aws-v1.8.0...resource-detector-aws-v1.9.0) (2024-12-04)
+
+
+### Features
+
+* **deps:** update deps matching '@opentelemetry/*' ([#2582](https://github.com/open-telemetry/opentelemetry-js-contrib/issues/2582)) ([5df02cb](https://github.com/open-telemetry/opentelemetry-js-contrib/commit/5df02cbb35681d2b5cce359dda7b023d7bf339f2))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @opentelemetry/contrib-test-utils bumped from ^0.43.0 to ^0.44.0
+    * @opentelemetry/instrumentation-fs bumped from ^0.17.0 to ^0.18.0
+
+## [1.8.0](https://github.com/open-telemetry/opentelemetry-js-contrib/compare/resource-detector-aws-v1.7.0...resource-detector-aws-v1.8.0) (2024-11-18)
+
+
+### Features
+
+* **deps:** update deps matching '@opentelemetry/*' ([#2535](https://github.com/open-telemetry/opentelemetry-js-contrib/issues/2535)) ([5223a6c](https://github.com/open-telemetry/opentelemetry-js-contrib/commit/5223a6ca10c5930cf2753271e1e670ae682d6d9c))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @opentelemetry/contrib-test-utils bumped from ^0.42.0 to ^0.43.0
+    * @opentelemetry/instrumentation-fs bumped from ^0.16.0 to ^0.17.0
+
+## [1.7.0](https://github.com/open-telemetry/opentelemetry-js-contrib/compare/resource-detector-aws-v1.6.2...resource-detector-aws-v1.7.0) (2024-10-25)
+
+
+### Features
+
+* update "@opentelemetry/*" dependencies to 1.27.0/0.54.0 ([2822511](https://github.com/open-telemetry/opentelemetry-js-contrib/commit/2822511a8acffb875ebd67ff2cf95980a9ddc01e))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @opentelemetry/contrib-test-utils bumped from ^0.41.0 to ^0.42.0
+
+## [1.6.2](https://github.com/open-telemetry/opentelemetry-js-contrib/compare/resource-detector-aws-v1.6.1...resource-detector-aws-v1.6.2) (2024-10-08)
+
+
+### Bug Fixes
+
+* **detector-aws:** suppress internal tracing for all detectors ([#2433](https://github.com/open-telemetry/opentelemetry-js-contrib/issues/2433)) ([aa9710f](https://github.com/open-telemetry/opentelemetry-js-contrib/commit/aa9710f73697f684f01140a3bdad495b705618b6))
+
+## [1.6.1](https://github.com/open-telemetry/opentelemetry-js-contrib/compare/resource-detector-aws-v1.6.0...resource-detector-aws-v1.6.1) (2024-09-02)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @opentelemetry/contrib-test-utils bumped from ^0.40.0 to ^0.41.0
+
+## [1.6.0](https://github.com/open-telemetry/opentelemetry-js-contrib/compare/resource-detector-aws-v1.5.2...resource-detector-aws-v1.6.0) (2024-08-27)
+
+
+### Features
+
+* **detector-aws:** add sync version for all detectors ([#2376](https://github.com/open-telemetry/opentelemetry-js-contrib/issues/2376)) ([167dced](https://github.com/open-telemetry/opentelemetry-js-contrib/commit/167dced09de0d2104561542b4f83047fa656505f))
+
+
+### Bug Fixes
+
+* **detectors:** reduce diag level on detectors failing to detect ([#2382](https://github.com/open-telemetry/opentelemetry-js-contrib/issues/2382)) ([d7a5bd4](https://github.com/open-telemetry/opentelemetry-js-contrib/commit/d7a5bd45838f34bab45f4ba235093fa686032622))
+
 ## [1.5.2](https://github.com/open-telemetry/opentelemetry-js-contrib/compare/resource-detector-aws-v1.5.1...resource-detector-aws-v1.5.2) (2024-07-03)
 
 

@@ -17,7 +17,7 @@
 import type { Middleware, ParameterizedContext, DefaultState } from 'koa';
 import type { RouterParamContext } from '@koa/router';
 import * as KoaRouter from '@koa/router';
-import { context, trace, Span, SpanKind } from '@opentelemetry/api';
+import { context, trace, Span } from '@opentelemetry/api';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
 import * as testUtils from '@opentelemetry/contrib-test-utils';
@@ -41,6 +41,7 @@ import * as assert from 'assert';
 import * as koa from 'koa';
 import * as http from 'http';
 import * as sinon from 'sinon';
+import * as semver from 'semver';
 import { AddressInfo } from 'net';
 import { KoaLayerType, KoaRequestInfo } from '../src/types';
 import { AttributeNames } from '../src/enums/AttributeNames';
@@ -65,7 +66,13 @@ const httpRequest = {
   },
 };
 
-describe('Koa Instrumentation', () => {
+const LIB_VERSION = require('@koa/router/package.json').version;
+const NODE_VERSION = process.version;
+const isrouterCompat =
+  semver.lt(LIB_VERSION, '13.0.0') ||
+  (semver.gte(LIB_VERSION, '13.0.0') && semver.gte(NODE_VERSION, '18.0.0'));
+
+describe('Koa Instrumentation', function () {
   const provider = new NodeTracerProvider();
   const memoryExporter = new InMemorySpanExporter();
   const spanProcessor = new SimpleSpanProcessor(memoryExporter);
@@ -77,7 +84,7 @@ describe('Koa Instrumentation', () => {
   let server: http.Server;
   let port: number;
 
-  before(() => {
+  before(function () {
     plugin.enable();
   });
 
@@ -141,7 +148,13 @@ describe('Koa Instrumentation', () => {
       yield next;
     };
 
-  describe('Instrumenting @koa/router calls', () => {
+  describe('Instrumenting @koa/router calls', function () {
+    before(function () {
+      if (!isrouterCompat) {
+        this.skip();
+      }
+    });
+
     it('should create a child span for middlewares (string route)', async () => {
       const rootSpan = tracer.startSpan('rootSpan');
       const rpcMetadata: RPCMetadata = { type: RPCType.HTTP, span: rootSpan };
@@ -585,7 +598,13 @@ describe('Koa Instrumentation', () => {
     });
   });
 
-  describe('Using requestHook', () => {
+  describe('Using requestHook', function () {
+    before(function () {
+      if (!isrouterCompat) {
+        this.skip();
+      }
+    });
+
     it('should ignore requestHook which throws exception', async () => {
       const rootSpan = tracer.startSpan('rootSpan');
       const rpcMetadata = { type: RPCType.HTTP, span: rootSpan };
@@ -721,7 +740,8 @@ describe('Koa Instrumentation', () => {
     });
   });
 
-  it('should work with ESM usage', async () => {
+  const itFn = isrouterCompat ? it : it.skip;
+  itFn('should work with ESM usage', async () => {
     await testUtils.runTestFixture({
       cwd: __dirname,
       argv: ['fixtures/use-koa.mjs'],
@@ -741,14 +761,16 @@ describe('Koa Instrumentation', () => {
         //    `- span 'middleware - simpleMiddleware'
         //       `- span 'router - /post/:id'
         const spans = collector.sortedSpans;
-        assert.strictEqual(spans[0].name, 'GET /post/:id');
-        assert.strictEqual(spans[0].kind, SpanKind.CLIENT);
-        assert.strictEqual(spans[1].name, 'middleware - simpleMiddleware');
-        assert.strictEqual(spans[1].kind, SpanKind.SERVER);
-        assert.strictEqual(spans[1].parentSpanId, spans[0].spanId);
-        assert.strictEqual(spans[2].name, 'router - /post/:id');
-        assert.strictEqual(spans[2].kind, SpanKind.SERVER);
+        assert.strictEqual(spans[0].name, 'GET');
+        assert.strictEqual(spans[0].kind, testUtils.OtlpSpanKind.CLIENT);
+        assert.strictEqual(spans[1].name, 'GET /post/:id');
+        assert.strictEqual(spans[1].kind, testUtils.OtlpSpanKind.SERVER);
+        assert.strictEqual(spans[2].name, 'middleware - simpleMiddleware');
+        assert.strictEqual(spans[2].kind, testUtils.OtlpSpanKind.INTERNAL);
         assert.strictEqual(spans[2].parentSpanId, spans[1].spanId);
+        assert.strictEqual(spans[3].name, 'router - /post/:id');
+        assert.strictEqual(spans[3].kind, testUtils.OtlpSpanKind.INTERNAL);
+        assert.strictEqual(spans[3].parentSpanId, spans[2].spanId);
       },
     });
   });

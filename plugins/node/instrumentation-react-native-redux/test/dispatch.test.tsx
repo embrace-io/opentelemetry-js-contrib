@@ -16,10 +16,7 @@
 import sinon from 'sinon';
 import { beforeEach, afterEach } from 'mocha';
 import getStore, { counterActions, rootReducer } from './helpers/store';
-import { fireEvent, render } from '@testing-library/react';
 import middleware from '../src/dispatch';
-import { Provider } from 'react-redux';
-import { Pressable, Text } from 'react-native';
 import {createInstanceProvider, shutdownInstanceProvider} from './helpers/provider';
 import * as spanFactory from '../src/utils/spanFactory';
 import {Attributes} from "@opentelemetry/api";
@@ -122,27 +119,7 @@ describe('dispatch.ts', () => {
   it('should track an action and create the corresponding span', () => {
     const store = getStore(exporter);
 
-    const handleIncrease = () => {
-      store.dispatch(counterActions.increase(3));
-    };
-
-    const handleDecrease = () => {
-      store.dispatch(counterActions.decrease(1));
-    };
-
-    const screen = render(
-      <Provider store={store}>
-        <Pressable onPress={handleIncrease}>
-          <Text>Increase</Text>
-        </Pressable>
-
-        <Pressable onPress={handleDecrease}>
-          <Text>Decrease</Text>
-        </Pressable>
-      </Provider>
-    );
-
-    fireEvent.click(screen.getByText('Increase'));
+    store.dispatch(counterActions.increase(3));
     verifySpans([{
       name: 'action',
       attributes: {
@@ -154,7 +131,7 @@ describe('dispatch.ts', () => {
     }]);
 
     exporter.reset();
-    fireEvent.click(screen.getByText('Decrease'));
+    store.dispatch(counterActions.decrease(1));
     verifySpans([{
       name: 'action',
       attributes: {

@@ -27,6 +27,7 @@ import type {
   FastifyInstance,
   FastifyRequest,
   FastifyReply,
+  FastifyErrorCodes,
 } from 'fastify';
 import { hooksNamesToWrap } from './constants';
 import {
@@ -41,6 +42,7 @@ import {
   safeExecuteInTheMiddleMaybePromise,
   startSpan,
 } from './utils';
+/** @knipignore */
 import { PACKAGE_NAME, PACKAGE_VERSION } from './version';
 
 export const ANONYMOUS_NAME = 'anonymous';
@@ -55,7 +57,7 @@ export class FastifyInstrumentation extends InstrumentationBase<FastifyInstrumen
     return [
       new InstrumentationNodeModuleDefinition(
         'fastify',
-        ['>=3.0.0 <5'],
+        ['>=3.0.0 <6'],
         moduleExports => {
           return this._patchConstructor(moduleExports);
         }
@@ -184,6 +186,7 @@ export class FastifyInstrumentation extends InstrumentationBase<FastifyInstrumen
 
   private _patchConstructor(moduleExports: {
     fastify: () => FastifyInstance;
+    errorCodes: FastifyErrorCodes | undefined;
   }): () => FastifyInstance {
     const instrumentation = this;
 
@@ -197,6 +200,9 @@ export class FastifyInstrumentation extends InstrumentationBase<FastifyInstrumen
       return app;
     }
 
+    if (moduleExports.errorCodes !== undefined) {
+      fastify.errorCodes = moduleExports.errorCodes;
+    }
     fastify.fastify = fastify;
     fastify.default = fastify;
     return fastify;
@@ -250,7 +256,7 @@ export class FastifyInstrumentation extends InstrumentationBase<FastifyInstrumen
         anyRequest.routeOptions?.handler || anyRequest.context?.handler;
 
       const handlerName = handler?.name.startsWith('bound ')
-        ? handler.name.substr(6)
+        ? handler.name.substring(6)
         : handler?.name;
       const spanName = `${FastifyNames.REQUEST_HANDLER} - ${
         handlerName || this.pluginName || ANONYMOUS_NAME

@@ -54,7 +54,7 @@ interface Result extends mysqlTypes.RowDataPacket {
   solution: number;
 }
 
-describe('mysql2@2.x', () => {
+describe('mysql2', () => {
   let contextManager: AsyncHooksContextManager;
   let connection: mysqlTypes.Connection;
   let rootConnection: mysqlTypes.Connection;
@@ -148,7 +148,7 @@ describe('mysql2@2.x', () => {
       host,
       password,
       database,
-    } as mysqlTypes.PoolClusterOptions);
+    });
   });
 
   afterEach(done => {
@@ -223,10 +223,14 @@ describe('mysql2@2.x', () => {
         });
 
         query.on('end', () => {
-          assert.strictEqual(rows, 1);
-          const spans = memoryExporter.getFinishedSpans();
-          assert.strictEqual(spans.length, 1);
-          assertSpan(spans[0], sql);
+          try {
+            assert.strictEqual(rows, 1);
+            const spans = memoryExporter.getFinishedSpans();
+            assert.strictEqual(spans.length, 1);
+            assertSpan(spans[0], sql);
+          } catch (e) {
+            done(e);
+          }
           done();
         });
       });
@@ -340,8 +344,12 @@ describe('mysql2@2.x', () => {
           const spans = memoryExporter.getFinishedSpans();
           assert.strictEqual(spans.length, 1);
           getLastQueries(1).then(([query]) => {
-            assert.doesNotMatch(query, /.*traceparent.*/);
-            done();
+            try {
+              assert.doesNotMatch(query, /.*traceparent.*/);
+              done();
+            } catch (e) {
+              done(e);
+            }
           });
         });
       });
