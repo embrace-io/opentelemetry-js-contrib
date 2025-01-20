@@ -16,10 +16,7 @@
 import sinon from 'sinon';
 import { beforeEach, afterEach } from 'mocha';
 import store, { counterActions, rootReducer } from './helper/store';
-import { fireEvent, render } from '@testing-library/react';
 import middleware from '../src/dispatch';
-import { Provider } from 'react-redux';
-import { Pressable, Text } from 'react-native';
 import { createInstanceProvider } from './helper/provider';
 import * as spanFactory from '../src/utils/spanFactory';
 import { applyMiddleware, legacy_createStore as createStore } from 'redux';
@@ -105,27 +102,7 @@ describe('dispatch.ts', () => {
   });
 
   it('should track an action and create the corresponding span', () => {
-    const handleIncrease = () => {
-      store.dispatch(counterActions.increase(3));
-    };
-
-    const handleDecrease = () => {
-      store.dispatch(counterActions.decrease(1));
-    };
-
-    const screen = render(
-      <Provider store={store}>
-        <Pressable onPress={handleIncrease}>
-          <Text>Increase</Text>
-        </Pressable>
-
-        <Pressable onPress={handleDecrease}>
-          <Text>Decrease</Text>
-        </Pressable>
-      </Provider>
-    );
-
-    fireEvent.click(screen.getByText('Increase'));
+    store.dispatch(counterActions.increase(3));
     sandbox.assert.calledWith(
       mockConsoleDir,
       sandbox.match({
@@ -144,7 +121,7 @@ describe('dispatch.ts', () => {
       })
     );
 
-    fireEvent.click(screen.getByText('Decrease'));
+    store.dispatch(counterActions.decrease(1));
     sandbox.assert.calledWith(
       mockConsoleDir,
       sandbox.match({
