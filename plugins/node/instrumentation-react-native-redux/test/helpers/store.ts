@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 import {
-  legacy_createStore as createStore,
   combineReducers,
-  applyMiddleware,
   Reducer,
-} from 'redux';
+  configureStore,
+  Tuple,
+} from '@reduxjs/toolkit';
+
 import { dispatchMiddleware } from '../../src';
-import { createInstanceProvider } from '../helper/provider';
+import { createInstanceProvider } from './provider';
+import { SpanExporter } from '@opentelemetry/sdk-trace-base';
 
 type IncrementAction = {
   type: 'COUNTER_INCREASE:slow';
@@ -65,13 +67,17 @@ const counterReducer: Reducer<CounterState, CounterActions> = (
 ) => {
   switch (action.type) {
     case 'COUNTER_INCREASE:slow': {
-      // NOTE: adding slowliness to the action for testing purposes
+      // NOTE: adding slowness to the action for testing purposes
       const test = new Array(1000000);
       test.forEach((_, index) => (test[index] = true));
 
       return { ...state, count: state.count + action.count };
     }
     case 'COUNTER_DECREASE:normal': {
+      if (action.count === 42) {
+        throw new Error('action failed');
+      }
+
       return { ...state, count: state.count - action.count };
     }
     default:
@@ -86,22 +92,23 @@ const rootReducer = combineReducers({
   counter: counterReducer,
 });
 
-const provider = createInstanceProvider();
-const middleware = dispatchMiddleware(provider, {
-  debug: true,
-});
-
 /**
  * Store
  */
+const getStore = (exporter: SpanExporter) => {
+  const provider = createInstanceProvider(exporter);
+  const middleware = dispatchMiddleware(provider, {
+    debug: true,
+  });
 
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-const store = createStore(rootReducer, applyMiddleware(middleware));
+  return configureStore({
+    reducer: rootReducer,
+    middleware: () => new Tuple(middleware),
+  });
+};
 
-type AppDispatch = typeof store.dispatch;
 type RootState = ReturnType<typeof rootReducer>;
 
-export default store;
+export default getStore;
 export { counterActions, rootReducer };
-export type { RootState, AppDispatch };
+export type { RootState };

@@ -21,6 +21,13 @@ const ATTRIBUTES = {
   payload: `${STATIC_NAME}.payload`,
   type: `${STATIC_NAME}.type`,
   appState: `${STATIC_NAME}.state`,
+  outcome: `${STATIC_NAME}.outcome`,
+};
+
+const OUTCOMES = {
+  incomplete: 'incomplete',
+  success: 'success',
+  fail: 'fail',
 };
 
 const spanStart = (
@@ -32,14 +39,12 @@ const spanStart = (
   return tracer.startSpan(name, options, context);
 };
 
-const spanEnd = (span: Span, attributes?: SpanOptions['attributes']) => {
-  span.setAttribute(ATTRIBUTES.appState, AppState.currentState);
-
-  if (attributes) {
-    span.setAttributes(attributes);
-  }
-
+const spanEnd = (span: Span, attributes: SpanOptions['attributes']) => {
+  span.setAttributes({
+    [ATTRIBUTES.appState]: AppState.currentState,
+    ...attributes,
+  });
   span.end();
 };
 
-export { spanStart, spanEnd, ATTRIBUTES, STATIC_NAME };
+export { spanStart, spanEnd, ATTRIBUTES, STATIC_NAME, OUTCOMES };

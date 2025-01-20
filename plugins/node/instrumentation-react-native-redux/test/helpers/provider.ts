@@ -15,16 +15,15 @@
  */
 import {
   BasicTracerProvider,
-  ConsoleSpanExporter,
+  SpanExporter,
   SimpleSpanProcessor,
 } from '@opentelemetry/sdk-trace-base';
 
 let provider: BasicTracerProvider;
 
-const createInstanceProvider = () => {
+const createInstanceProvider = (exporter: SpanExporter) => {
   provider = new BasicTracerProvider();
 
-  const exporter = new ConsoleSpanExporter();
   const processor = new SimpleSpanProcessor(exporter);
 
   provider.addSpanProcessor(processor);
@@ -34,7 +33,9 @@ const createInstanceProvider = () => {
 };
 
 const shutdownInstanceProvider = async () => {
-  await provider.shutdown();
+  if (provider) {
+    await provider.shutdown();
+  }
 };
 
 export { createInstanceProvider, shutdownInstanceProvider };

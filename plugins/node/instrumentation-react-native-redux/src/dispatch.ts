@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Dispatch, Middleware, Action, UnknownAction } from 'redux';
+import { Middleware, Action } from '@reduxjs/toolkit';
 import { TracerProvider, trace, Attributes } from '@opentelemetry/api';
 import { PACKAGE_NAME, PACKAGE_VERSION } from './version';
 import {
@@ -21,25 +21,31 @@ import {
   spanEnd,
   spanStart,
   STATIC_NAME,
+  OUTCOMES,
 } from './utils/spanFactory';
 import logFactory from './utils/logFactory';
 
 interface MiddlewareConfig {
   debug?: boolean;
   name?: string; // custom name for each action
-  attributes?: Attributes;
+  attributeTransform?: (attrs: Attributes) => Attributes;
 }
+
+const defaultAttributeTransform = (attrs: Attributes) => attrs;
 
 const middleware = <RootState>(
   provider: TracerProvider | undefined,
   config?: MiddlewareConfig
+  // disabling rule following recommendation on: https://redux.js.org/usage/usage-with-typescript#type-checking-middleware
   // eslint-disable-next-line @typescript-eslint/ban-types
 ): Middleware<{}, RootState> => {
-  const { debug, name, attributes } = config || {};
+  const {
+    debug,
+    name,
+    attributeTransform = defaultAttributeTransform,
+  } = config || {};
   const console = logFactory(!!debug);
 
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
   return () => {
     if (provider) {
       console.info('TracerProvider. Using custom tracer.');
@@ -51,19 +57,41 @@ const middleware = <RootState>(
       ? provider.getTracer(PACKAGE_NAME, PACKAGE_VERSION)
       : trace.getTracer(PACKAGE_NAME, PACKAGE_VERSION);
 
-    return (next: Dispatch<UnknownAction>) => {
-      return (action: Action) => {
-        const span = spanStart(tracer, name ?? STATIC_NAME, { attributes });
-        const result = next(action);
+    return next => {
+      return action => {
+        const actionTyped = action as Action;
+        if (!(actionTyped && actionTyped.type)) {
+          return next(action);
+        }
 
-        const { type, ...otherValues } = result;
+        const { type, ...otherValues } = actionTyped;
 
-        spanEnd(span, {
-          [ATTRIBUTES.type]: type,
-          [ATTRIBUTES.payload]: JSON.stringify(otherValues),
+        const span = spanStart(tracer, name ?? STATIC_NAME, {
+          attributes: attributeTransform({
+            [ATTRIBUTES.type]: type,
+            [ATTRIBUTES.payload]: JSON.stringify(otherValues),
+            [ATTRIBUTES.outcome]: OUTCOMES.incomplete,
+          }),
         });
 
-        return result;
+        try {
+          const result = next(action);
+          spanEnd(
+            span,
+            attributeTransform({
+              [ATTRIBUTES.outcome]: OUTCOMES.success,
+            })
+          );
+          return result;
+        } catch (err) {
+          spanEnd(
+            span,
+            attributeTransform({
+              [ATTRIBUTES.outcome]: OUTCOMES.fail,
+            })
+          );
+          throw err;
+        }
       };
     };
   };
