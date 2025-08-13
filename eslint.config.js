@@ -1,57 +1,76 @@
+'use strict';
+
 const js = require('@eslint/js');
 const tseslint = require('typescript-eslint');
-const prettierConfig = require('eslint-config-prettier');
-const eslintPluginPrettier = require('eslint-plugin-prettier');
-const headerPlugin = require('eslint-plugin-header');
+const globals = require('globals');
+const nodePlugin = require('eslint-plugin-n');
 
-module.exports = [
+/** @type {Array<import('eslint').Linter.FlatConfig>} */
+const config = [
+  // Ignore files
   {
-    ignores: ['**/build/**', '**/coverage/**'],
+    ignores: [
+      '**/build/**',
+      '**/coverage/**',
+      '**/dist/**',
+      '**/node_modules/**',
+    ],
   },
-  js.configs.recommended,
-  ...tseslint.configs.recommended,
-  prettierConfig,
+  // Base config for all files
   {
+    files: ['**/*.{js,ts,mjs}'],
     plugins: {
-      header: headerPlugin,
-      prettier: eslintPluginPrettier,
+      node: nodePlugin,
     },
     languageOptions: {
-      parser: tseslint.parser,
+      ecmaVersion: 2022,
+      // sourceType: 'module',
       parserOptions: {
-        project: null,
+        project: true,
+      },
+      globals: {
+        ...globals.node,
+      },
+    },
+    settings: {
+      node: {
+        tryExtensions: ['.js', '.json', '.node', '.ts'],
       },
     },
     rules: {
+      ...js.configs.recommended.rules,
       quotes: ['error', 'single', { avoidEscape: true }],
       eqeqeq: ['error', 'smart'],
       'prefer-rest-params': 'off',
       'no-shadow': 'off',
-      'header/header': [
-        'error',
-        'block',
-        [
-          {
-            pattern:
-              / \* Copyright The OpenTelemetry Authors(, .+)*[\r\n]+ \*[\r\n]+ \* Licensed under the Apache License, Version 2\.0 \(the \"License\"\);[\r\n]+ \* you may not use this file except in compliance with the License\.[\r\n]+ \* You may obtain a copy of the License at[\r\n]+ \*[\r\n]+ \*      https:\/\/www\.apache\.org\/licenses\/LICENSE-2\.0[\r\n]+ \*[\r\n]+ \* Unless required by applicable law or agreed to in writing, software[\r\n]+ \* distributed under the License is distributed on an \"AS IS\" BASIS,[\r\n]+ \* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied\.[\r\n]+ \* See the License for the specific language governing permissions and[\r\n]+ \* limitations under the License\./gm,
-            template: `\n * Copyright The OpenTelemetry Authors\n *\n * Licensed under the Apache License, Version 2.0 (the "License");\n * you may not use this file except in compliance with the License.\n * You may obtain a copy of the License at\n *\n *      https://www.apache.org/licenses/LICENSE-2.0\n *\n * Unless required by applicable law or agreed to in writing, software\n * distributed under the License is distributed on an "AS IS" BASIS,\n * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n * See the License for the specific language governing permissions and\n * limitations under the License.\n `,
-          },
-        ],
-      ],
+      'node/no-extraneous-require': 'error',
     },
   },
+  // TypeScript-specific config
   {
     files: ['**/*.ts'],
-    ...tseslint.configs.recommended,
+    plugins: {
+      '@typescript-eslint': tseslint.plugin,
+      node: nodePlugin,
+    },
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
-        project: './tsconfig.json',
+        project: true,
       },
     },
     rules: {
-      '@typescript-eslint/no-floating-promises': 'error',
+      'no-unused-vars': 'off',
+      'no-undef': 'off',
+      ...tseslint.configs.strictTypeChecked.rules,
       '@typescript-eslint/no-this-alias': 'off',
+      '@typescript-eslint/no-shadow': ['warn'],
+      '@typescript-eslint/no-var-requires': 'off',
+      '@typescript-eslint/no-empty-function': 'off',
+      '@typescript-eslint/no-inferrable-types': [
+        'error',
+        { ignoreProperties: true },
+      ],
       '@typescript-eslint/naming-convention': [
         'error',
         {
@@ -61,67 +80,47 @@ module.exports = [
           leadingUnderscore: 'require',
         },
       ],
-      '@typescript-eslint/no-var-requires': 'off',
-      '@typescript-eslint/no-inferrable-types': [
-        'error',
-        { ignoreProperties: true },
-      ],
-      '@typescript-eslint/no-empty-function': ['off'],
-      '@typescript-eslint/ban-types': [
-        'warn',
-        {
-          types: {
-            Function: null,
-          },
-        },
-      ],
-      '@typescript-eslint/no-shadow': ['warn'],
-      '@typescript-eslint/ban-ts-comment': [
-        'error',
-        {
-          'ts-ignore': true,
-          'ts-nocheck': true,
-          'ts-check': false,
-        },
-      ],
-      'prefer-rest-params': 'off',
     },
   },
+  // Test files config
   {
-    files: ['**/test/**/*.ts'],
-    ...tseslint.configs.recommended,
+    files: ['**/test/**/*.{js,ts}'],
     languageOptions: {
-      parser: tseslint.parser,
-      parserOptions: {
-        project: './tsconfig.json',
+      globals: {
+        ...globals.mocha,
+        ...globals.node,
       },
     },
     rules: {
       'no-empty': 'off',
-      '@typescript-eslint/ban-ts-ignore': 'off',
-      '@typescript-eslint/ban-types': [
-        'warn',
-        {
-          types: {
-            Function: null,
-          },
-        },
-      ],
       '@typescript-eslint/no-empty-function': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-unused-vars': 'off',
       '@typescript-eslint/no-var-requires': 'off',
-      '@typescript-eslint/no-shadow': ['off'],
-      '@typescript-eslint/no-floating-promises': ['off'],
-      '@typescript-eslint/no-non-null-assertion': ['off'],
-      '@typescript-eslint/explicit-module-boundary-types': ['off'],
-      'prefer-rest-params': 'off',
+      '@typescript-eslint/no-shadow': 'off',
+      '@typescript-eslint/no-floating-promises': 'off',
+      '@typescript-eslint/no-non-null-assertion': 'off',
+      '@typescript-eslint/explicit-module-boundary-types': 'off',
     },
   },
+  // Browser environment config
   {
-    files: ['**/*.mjs'],
+    files: [
+      '**/examples/web/**/*',
+      '**/packages/**/browser/**/*',
+      '**/packages/instrumentation-user-interaction/**/*',
+      '**/packages/instrumentation-document-load/**/*',
+      '**/packages/instrumentation-long-task/**/*',
+      '**/packages/plugin-react-load/**/*',
+    ],
     languageOptions: {
-      sourceType: 'module',
+      globals: {
+        ...globals.browser,
+        Zone: 'readonly',
+        Task: 'readonly',
+      },
     },
   },
 ];
+
+module.exports = config;
