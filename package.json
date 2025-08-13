@@ -1,5 +1,7 @@
 {
-  "name": "opentelemetry-contrib",
+  "name": "opentelemetry-js-contrib",
+  "private": true,
+  "type": "commonjs",
   "version": "0.1.0",
   "description": "This is a repository for OpenTelemetry JavaScript contributions.",
   "repository": {

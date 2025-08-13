@@ -1,6 +1,7 @@
 {
   "name": "grpc-census-prop-example",
   "version": "0.23.0",
+  "private": true,
   "description": "Example of using propagator-grpc-census-binary",
   "main": "index.js",
   "scripts": {
