@@ -1,5 +1,5 @@
 /* eslint-disable license-header/header */
-
+/* eslint-disable n/no-unpublished-import */
 import eslint from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import globals from 'globals';
