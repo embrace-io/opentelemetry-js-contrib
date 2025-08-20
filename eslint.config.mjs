@@ -1,10 +1,10 @@
-'use strict';
+/* eslint-disable license-header/header */
 
-const js = require('@eslint/js');
-const tseslint = require('typescript-eslint');
-const globals = require('globals');
-const nodePlugin = require('eslint-plugin-n');
-const licenseHeaderPlugin = require('eslint-plugin-license-header');
+import js from '@eslint/js';
+import tseslint from 'typescript-eslint';
+import globals from 'globals';
+import nodePlugin from 'eslint-plugin-n';
+import licenseHeaderPlugin from 'eslint-plugin-license-header';
 
 const license = [
   '/*',
@@ -24,22 +24,23 @@ const license = [
   ' */',
 ];
 
-const ignores = [
-  '**/build/**',
-  '**/coverage/**',
-  '**/dist/**',
-  '**/node_modules/**',
-];
-
 const baseConfig = tseslint.config(
-  // Base rules for all files
+  {
+    ignores: [
+      '**/build/**',
+      '**/coverage/**',
+      '**/dist/**',
+      '**/node_modules/**',
+    ],
+  },
   {
     files: ['**/*.{js,ts,mjs}'],
-    ignores,
     plugins: {
-      node: nodePlugin,
       'license-header': licenseHeaderPlugin,
+      n: nodePlugin,
+      '@typescript-eslint': tseslint.plugin,
     },
+    extends: [nodePlugin.configs['flat/recommended']],
     languageOptions: {
       ecmaVersion: 2022,
       globals: {
@@ -56,8 +57,7 @@ const baseConfig = tseslint.config(
       quotes: ['error', 'single', { avoidEscape: true }],
       eqeqeq: ['error', 'smart'],
       'prefer-rest-params': 'off',
-      'no-shadow': 'off',
-      'node/no-deprecated-api': ['warn'],
+      'n/no-deprecated-api': ['warn'],
       'license-header/header': ['error', license],
     },
   },
@@ -65,7 +65,8 @@ const baseConfig = tseslint.config(
   // TypeScript strict rules
   {
     files: ['**/*.ts'],
-    extends: [...tseslint.configs.strictTypeChecked],
+    // extends: [...tseslint.configs.strictTypeChecked],
+    extends: [...tseslint.configs.recommendedTypeChecked],
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
@@ -88,7 +89,7 @@ const baseConfig = tseslint.config(
 
   // Test files relaxed rules
   {
-    files: ['**/test/**/*.ts'],
+    files: ['**/test/**/*.ts', '**/*.test.ts'],
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-unsafe-assignment': 'off',
@@ -112,16 +113,6 @@ const baseConfig = tseslint.config(
         { argsIgnorePattern: '^_' },
       ],
       'no-empty': 'off',
-    },
-  },
-
-  // JavaScript test files
-  {
-    files: ['**/test/**/*.js'],
-    languageOptions: {
-      globals: {
-        ...globals.mocha,
-      },
     },
   },
 
@@ -153,4 +144,5 @@ const baseConfig = tseslint.config(
   }
 );
 
-module.exports = baseConfig;
+// module.exports = baseConfig;
+export default baseConfig;
