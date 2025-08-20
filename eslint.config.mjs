@@ -1,6 +1,6 @@
 /* eslint-disable license-header/header */
 
-import js from '@eslint/js';
+import eslint from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import globals from 'globals';
 import nodePlugin from 'eslint-plugin-n';
@@ -40,7 +40,11 @@ const baseConfig = tseslint.config(
       n: nodePlugin,
       '@typescript-eslint': tseslint.plugin,
     },
-    extends: [nodePlugin.configs['flat/recommended']],
+    extends: [
+      eslint.configs.recommended,
+      tseslint.configs.recommended,
+      nodePlugin.configs['flat/recommended'],
+    ],
     languageOptions: {
       ecmaVersion: 2022,
       globals: {
@@ -49,11 +53,10 @@ const baseConfig = tseslint.config(
     },
     settings: {
       node: {
-        tryExtensions: ['.js', '.json', '.node', '.ts'],
+        tryExtensions: ['.js', '.json', '.node', '.ts', '.tsx'],
       },
     },
     rules: {
-      ...js.configs.recommended.rules,
       quotes: ['error', 'single', { avoidEscape: true }],
       eqeqeq: ['error', 'smart'],
       'prefer-rest-params': 'off',
@@ -84,6 +87,7 @@ const baseConfig = tseslint.config(
           leadingUnderscore: 'require',
         },
       ],
+      'n/no-missing-import': 'off',
     },
   },
 
