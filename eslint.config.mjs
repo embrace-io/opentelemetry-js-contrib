@@ -1,10 +1,10 @@
 /* eslint-disable license-header/header */
-/* eslint-disable n/no-unpublished-import */
+// /* eslint-disable n/no-unpublished-import */
 import eslint from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import globals from 'globals';
-import nodePlugin from 'eslint-plugin-n';
 import licenseHeaderPlugin from 'eslint-plugin-license-header';
+// import nodePlugin from 'eslint-plugin-n';
 
 const license = [
   '/*',
@@ -37,13 +37,11 @@ const baseConfig = tseslint.config(
     files: ['**/*.{js,ts,mjs}'],
     plugins: {
       'license-header': licenseHeaderPlugin,
-      n: nodePlugin,
-      '@typescript-eslint': tseslint.plugin,
+      // n: nodePlugin,
     },
     extends: [
       eslint.configs.recommended,
-      tseslint.configs.recommended,
-      nodePlugin.configs['flat/recommended'],
+      // nodePlugin.configs['flat/recommended'],
     ],
     languageOptions: {
       ecmaVersion: 2022,
@@ -60,15 +58,17 @@ const baseConfig = tseslint.config(
       quotes: ['error', 'single', { avoidEscape: true }],
       eqeqeq: ['error', 'smart'],
       'prefer-rest-params': 'off',
-      'n/no-deprecated-api': ['warn'],
       'license-header/header': ['error', license],
+      // 'n/no-deprecated-api': 'warn',
     },
   },
 
   // TypeScript strict rules
   {
     files: ['**/*.ts'],
-    // extends: [...tseslint.configs.strictTypeChecked],
+    plugins: {
+      '@typescript-eslint': tseslint.plugin,
+    },
     extends: [...tseslint.configs.recommendedTypeChecked],
     languageOptions: {
       parser: tseslint.parser,
@@ -77,6 +77,11 @@ const baseConfig = tseslint.config(
       },
     },
     rules: {
+      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-require-imports': [
+        'error',
+        { allowAsImport: true },
+      ],
       '@typescript-eslint/no-var-requires': 'off',
       '@typescript-eslint/naming-convention': [
         'error',
@@ -87,7 +92,7 @@ const baseConfig = tseslint.config(
           leadingUnderscore: 'require',
         },
       ],
-      'n/no-missing-import': 'off',
+      // 'n/no-missing-import': 'off',
     },
   },
 
